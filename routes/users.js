@@ -79,6 +79,39 @@ router.patch('/:id/role', verifyToken, async (req, res) => {
     }
 });
 
+// Update user profile (Name, PhotoURL)
+router.patch('/:id', verifyToken, async (req, res) => {
+    try {
+        const { name, photoUrl } = req.body;
+        const requestingUserId = req.user._id.toString();
+        const targetUserId = req.params.id;
+
+        // Verify ownership
+        if (requestingUserId !== targetUserId) {
+            return res.status(403).json({ error: 'Access denied. You can only update your own profile.' });
+        }
+
+        const updates = {};
+        if (name) updates.name = name;
+        if (photoUrl) updates.photoUrl = photoUrl;
+
+        const user = await User.findByIdAndUpdate(
+            targetUserId,
+            updates,
+            { new: true }
+        ).select('-firebaseUid');
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found.' });
+        }
+
+        res.json({ message: 'Profile updated successfully', user });
+    } catch (error) {
+        console.error('Update profile error:', error);
+        res.status(500).json({ error: 'Failed to update profile.' });
+    }
+});
+
 // Delete user (Admin only)
 router.delete('/:id', verifyToken, isAdmin, async (req, res) => {
     try {
