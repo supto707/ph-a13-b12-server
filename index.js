@@ -1,4 +1,4 @@
- require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -34,6 +34,7 @@ const withdrawalRoutes = require('./routes/withdrawals');
 const paymentRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notifications');
 const statsRoutes = require('./routes/stats');
+const reportRoutes = require('./routes/reports');
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
@@ -44,6 +45,7 @@ app.use('/api/withdrawals', withdrawalRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Health Check
 app.get('/', (req, res) => {

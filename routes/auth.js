@@ -2,7 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 const User = require('../models/User');
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, isAdmin } = require('../middleware/auth');
+const { sendEmail } = require('../utils/email');
 
 const router = express.Router();
 
@@ -30,6 +31,13 @@ router.post('/register', async (req, res) => {
         });
 
         await user.save();
+
+        // Send welcome email
+        await sendEmail(
+            email,
+            'Welcome to MicroTask!',
+            `Hi ${name}, welcome to our micro-tasking platform! Your account has been created successfully.`
+        );
 
         // Generate JWT
         const token = jwt.sign(
@@ -155,6 +163,13 @@ router.post('/google-login', async (req, res) => {
             user.firebaseUid = firebaseUid;
             if (photoUrl) user.photoUrl = photoUrl;
             await user.save();
+
+            // Send welcome email
+            await sendEmail(
+                email,
+                'Welcome to MicroTask!',
+                `Hi ${name}, welcome to our micro-tasking platform! Your account has been created via Google successfully.`
+            );
         }
 
         // Generate JWT

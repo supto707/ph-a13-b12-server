@@ -8,8 +8,24 @@ const router = express.Router();
 // Get all available tasks (required_workers > 0)
 router.get('/', async (req, res) => {
     try {
-        const tasks = await Task.find({ requiredWorkers: { $gt: 0 } })
-            .sort({ createdAt: -1 });
+        const { sort, search } = req.query;
+        let query = { requiredWorkers: { $gt: 0 } };
+
+        if (search) {
+            query.title = { $regex: search, $options: 'i' };
+        }
+
+        let sortOption = { createdAt: -1 };
+        if (sort === 'price-desc') {
+            sortOption = { payableAmount: -1 };
+        } else if (sort === 'price-asc') {
+            sortOption = { payableAmount: 1 };
+        } else if (sort === 'deadline-asc') {
+            sortOption = { completionDate: 1 };
+        }
+
+        const tasks = await Task.find(query)
+            .sort(sortOption);
         res.json(tasks);
     } catch (error) {
         console.error('Get tasks error:', error);

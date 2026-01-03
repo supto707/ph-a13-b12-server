@@ -3,6 +3,7 @@ const Submission = require('../models/Submission');
 const Task = require('../models/Task');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const { sendEmail } = require('../utils/email');
 const { verifyToken, isWorker, isBuyer } = require('../middleware/auth');
 
 const router = express.Router();
@@ -156,6 +157,13 @@ router.patch('/:id/approve', verifyToken, isBuyer, async (req, res) => {
         });
         await notification.save();
 
+        // Send email notification
+        await sendEmail(
+            submission.workerEmail,
+            'Task Approved!',
+            `Good news! Your work for "${submission.taskTitle}" was approved. You earned ${submission.payableAmount} coins.`
+        );
+
         res.json({ message: 'Submission approved successfully', submission });
     } catch (error) {
         console.error('Approve submission error:', error);
@@ -193,6 +201,13 @@ router.patch('/:id/reject', verifyToken, isBuyer, async (req, res) => {
             actionRoute: '/dashboard/my-submissions'
         });
         await notification.save();
+
+        // Send email notification
+        await sendEmail(
+            submission.workerEmail,
+            'Submission Update',
+            `Your submission for "${submission.taskTitle}" has been reviewed and rejected. Visit our platform for details.`
+        );
 
         res.json({ message: 'Submission rejected', submission });
     } catch (error) {
