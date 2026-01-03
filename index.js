@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const helmet = require('helmet');
+const mongoSanitize = require('express-mongo-sanitize');
+const morgan = require('morgan');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -19,6 +22,9 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(helmet());
+app.use(mongoSanitize());
+app.use(morgan('dev'));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
@@ -35,6 +41,8 @@ const paymentRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notifications');
 const statsRoutes = require('./routes/stats');
 const reportRoutes = require('./routes/reports');
+
+const errorHandler = require('./middleware/error');
 
 // Mount Routes
 app.use('/api/auth', authRoutes);
@@ -53,10 +61,7 @@ app.get('/', (req, res) => {
 });
 
 // Error Handler
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
