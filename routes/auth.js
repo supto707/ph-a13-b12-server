@@ -82,12 +82,11 @@ router.post('/login', async (req, res) => {
         // Update firebaseUid if not set (for existing users)
         if (!user.firebaseUid && firebaseUid) {
             user.firebaseUid = firebaseUid;
-            await user.save();
-        } else if (user.firebaseUid !== firebaseUid && !firebaseUid.startsWith('demo-')) {
-            // For non-demo accounts, we might want to check if the UID matches
-            // but the current logic is very permissive. Let's keep it that way for now
-            // or add a check if needed.
         }
+
+        // Update last login timestamp
+        user.lastLogin = new Date();
+        await user.save();
 
         // Generate JWT
         const token = jwt.sign(
@@ -171,6 +170,10 @@ router.post('/google-login', async (req, res) => {
                 `Hi ${name}, welcome to our micro-tasking platform! Your account has been created via Google successfully.`
             );
         }
+
+        // Update last login timestamp
+        user.lastLogin = new Date();
+        await user.save();
 
         // Generate JWT
         const token = jwt.sign(
