@@ -42,6 +42,8 @@ const notificationRoutes = require('./routes/notifications');
 const statsRoutes = require('./routes/stats');
 const reportRoutes = require('./routes/reports');
 
+const errorHandler = require('./middleware/error');
+
 // Mount Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -59,10 +61,7 @@ app.get('/', (req, res) => {
 });
 
 // Error Handler
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
+app.use(errorHandler);
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
