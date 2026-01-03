@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
 const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
 
@@ -33,7 +34,7 @@ router.post('/register', async (req, res) => {
         // Generate JWT
         const token = jwt.sign(
             { userId: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -83,7 +84,7 @@ router.post('/login', async (req, res) => {
         // Generate JWT
         const token = jwt.sign(
             { userId: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -159,7 +160,7 @@ router.post('/google-login', async (req, res) => {
         // Generate JWT
         const token = jwt.sign(
             { userId: user._id, email: user.email, role: user.role },
-            process.env.JWT_SECRET,
+            JWT_SECRET,
             { expiresIn: '7d' }
         );
 
