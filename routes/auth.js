@@ -41,7 +41,7 @@ router.post('/register', async (req, res) => {
             message: 'Registration successful',
             token,
             user: {
-                id: user._id,
+                _id: user._id,
                 name: user.name,
                 email: user.email,
                 photoUrl: user.photoUrl,
@@ -91,7 +91,7 @@ router.post('/login', async (req, res) => {
             message: 'Login successful',
             token,
             user: {
-                id: user._id,
+                _id: user._id,
                 name: user.name,
                 email: user.email,
                 photoUrl: user.photoUrl,
@@ -111,7 +111,7 @@ router.get('/verify', verifyToken, async (req, res) => {
     try {
         res.json({
             user: {
-                id: req.user._id,
+                _id: req.user._id,
                 name: req.user.name,
                 email: req.user.email,
                 photoUrl: req.user.photoUrl,
@@ -165,7 +165,7 @@ router.post('/google-login', async (req, res) => {
             token,
             isNewUser,
             user: {
-                id: user._id,
+                _id: user._id,
                 name: user.name,
                 email: user.email,
                 photoUrl: user.photoUrl,
