@@ -8,7 +8,14 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8080'],
+    origin: [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'https://ph-b12-a13-microtask.vercel.app',
+        'https://ph-a13-b12-client.vercel.app', // Corrected origin
+        /\.vercel\.app$/
+    ],
     credentials: true
 }));
 app.use(express.json());
@@ -52,3 +59,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
+
+module.exports = app;
