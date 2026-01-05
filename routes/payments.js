@@ -13,24 +13,67 @@ const COIN_PACKAGES = [
     { id: 4, coins: 1000, price: 35 }
 ];
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
 // Get coin packages
 router.get('/packages', (req, res) => {
     res.json(COIN_PACKAGES);
 });
 
-// Process payment (dummy payment for now)
-router.post('/process', verifyToken, isBuyer, async (req, res) => {
+// Create Payment Intent
+router.post('/create-payment-intent', verifyToken, isBuyer, async (req, res) => {
     try {
-        const { packageId, cardNumber, expiryDate, cvv } = req.body;
-
+        const { packageId } = req.body;
         const selectedPackage = COIN_PACKAGES.find(p => p.id === packageId);
+
         if (!selectedPackage) {
             return res.status(400).json({ error: 'Invalid package selected.' });
         }
 
-        // Simulate payment processing (dummy payment)
-        // In production, integrate with Stripe here
-        const transactionId = `TXN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const amount = Math.round(selectedPackage.price * 100); // Stripe expects amount in cents
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amount,
+            currency: 'usd',
+            payment_method_types: ['card'],
+            metadata: {
+                buyerEmail: req.user.email,
+                packageId: packageId.toString(),
+                coins: selectedPackage.coins.toString()
+            }
+        });
+
+        res.json({
+            clientSecret: paymentIntent.client_secret
+        });
+    } catch (error) {
+        console.error('Create payment intent error:', error);
+        res.status(500).json({ error: 'Failed to create payment intent.' });
+    }
+});
+
+// Confirm Payment and update coins
+router.post('/confirm-payment', verifyToken, isBuyer, async (req, res) => {
+    try {
+        const { paymentIntentId, packageId } = req.body;
+
+        // Verify the payment intent with Stripe
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+        if (paymentIntent.status !== 'succeeded') {
+            return res.status(400).json({ error: 'Payment not successful.' });
+        }
+
+        const selectedPackage = COIN_PACKAGES.find(p => p.id === packageId);
+        if (!selectedPackage) {
+            return res.status(400).json({ error: 'Invalid package.' });
+        }
+
+        // Check if this payment intent has already been processed to prevent double-crediting
+        const existingPayment = await Payment.findOne({ transactionId: paymentIntentId });
+        if (existingPayment) {
+            return res.status(400).json({ error: 'Payment already processed.' });
+        }
 
         // Create payment record
         const payment = new Payment({
@@ -39,7 +82,7 @@ router.post('/process', verifyToken, isBuyer, async (req, res) => {
             buyerId: req.user._id,
             coinsPurchased: selectedPackage.coins,
             amountPaid: selectedPackage.price,
-            transactionId
+            transactionId: paymentIntentId
         });
 
         await payment.save();
@@ -50,16 +93,13 @@ router.post('/process', verifyToken, isBuyer, async (req, res) => {
         });
 
         res.json({
-            message: 'Payment successful!',
-            payment: {
-                transactionId,
-                coinsPurchased: selectedPackage.coins,
-                amountPaid: selectedPackage.price
-            }
+            success: true,
+            message: 'Payment confirmed and coins added!',
+            payment
         });
     } catch (error) {
-        console.error('Process payment error:', error);
-        res.status(500).json({ error: 'Payment processing failed.' });
+        console.error('Confirm payment error:', error);
+        res.status(500).json({ error: 'Failed to confirm payment.' });
     }
 });
 
